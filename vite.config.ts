@@ -19,10 +19,16 @@ export default defineConfig({
     // Otimizações para produção
     minify: "esbuild",
     cssCodeSplit: true,
+    // Aumentar limite de aviso de chunk size para 700KB
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks: {
+          // Separar React e ReactDOM em vendor
           vendor: ["react", "react-dom"],
+          // Separar framer-motion em chunk próprio
+          animations: ["framer-motion"],
+          // Separar outras bibliotecas grandes se necessário
         },
         // Garante que o entry point seja um arquivo separado
         entryFileNames: `assets/[name]-[hash].js`,
