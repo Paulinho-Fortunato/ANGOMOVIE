@@ -1,38 +1,38 @@
-```gitignore
-# Dependencies
-node_modules/
-
-# Build outputs
+# Build artifacts
 dist/
 build/
-target/
+coverage/
+htmlcov/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+.yarn-cache/
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.py.class
 .Python
 env/
 venv/
 .venv/
 .ENV
 .python-version
+.mypy_cache/
+.pytest_cache/
+.tox/
+.coverage
 
 # Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*
@@ -43,17 +43,21 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+*~
 
-# Coverage
-coverage/
-htmlcov/
-.coverage
+# OS
+.DS_Store
+Thumbs.db
 
 # Temporary files
 *.tmp
 *.temp
-*.bak
-*.backup
+.DS_Store
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+desktop.ini
 
 # Compressed files
 *.zip
@@ -78,4 +82,7 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
+
+# Vite specific
+.vite/
+!vite.config.ts
