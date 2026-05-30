@@ -1065,17 +1065,58 @@ export default function App() {
     }
   }, [escapeText]);
 
-  const abrirDeepLink = useCallback((prefixo: "idm" | "adm", url: string): void => {
+  const abrirDeepLink = useCallback(async (prefixo: "idm" | "adm", urlBase: string): Promise<void> => {
     try {
-      if (prefixo === "idm") {
-        abrirEmIDM(url);
-      } else if (prefixo === "adm") {
-        abrirEmADM(url);
+      // Extrair parâmetros da URL base
+      const urlParams = new URL(urlBase, window.location.origin);
+      const tipo = urlParams.searchParams.get("tipo") as "movie" | "tv";
+      const id = urlParams.searchParams.get("id") || "";
+      const servidor = urlParams.searchParams.get("servidor") || "s1";
+      const temporada = urlParams.searchParams.get("temporada") || "1";
+      const episodio = urlParams.searchParams.get("episodio") || "1";
+      const qualidade = urlParams.searchParams.get("qualidade") || "auto";
+      
+      // Construir URL da API com todos os parâmetros
+      const apiUrl = new URL("/api/player-url", window.location.origin);
+      apiUrl.searchParams.set("tipo", tipo);
+      apiUrl.searchParams.set("id", id);
+      apiUrl.searchParams.set("servidor", servidor);
+      apiUrl.searchParams.set("temporada", temporada);
+      apiUrl.searchParams.set("episodio", episodio);
+      apiUrl.searchParams.set("qualidade", qualidade);
+      
+      // Obter deep links da API
+      const resposta = await fetch(apiUrl.toString());
+      if (!resposta.ok) {
+        throw new Error(`Erro na API: ${resposta.status}`);
       }
+      
+      const dados = await resposta.json();
+      if (!dados.success || !dados.data?.deepLinks) {
+        throw new Error("Resposta inválida da API");
+      }
+      
+      // Usar o deep link apropriado
+      const deepLink = prefixo === "idm" 
+        ? dados.data.deepLinks.oneDm 
+        : dados.data.deepLinks.adm;
+      
+      // Abrir o deep link
+      window.location.href = deepLink;
+      
     } catch (erro) {
       console.error("Erro ao abrir deep link:", erro);
-      // Fallback: abrir em nova aba
-      window.open(url, "_blank");
+      // Fallback: tentar abrir diretamente com as funções existentes
+      try {
+        if (prefixo === "idm") {
+          abrirEmIDM(urlBase);
+        } else if (prefixo === "adm") {
+          abrirEmADM(urlBase);
+        }
+      } catch (erro2) {
+        // Último fallback: abrir em nova aba
+        window.open(urlBase, "_blank");
+      }
     }
   }, []);
 

@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+const SERVIDOR_BASE = 'https://myembed.biz';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Habilitar CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,32 +16,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { tipo, id, servidor, titulo, ano } = req.query;
+  const { tipo, id, servidor, temporada, episodio, titulo, ano, qualidade = 'auto' } = req.query;
 
   if (!tipo || !id || !servidor) {
     return res.status(400).json({ error: 'Parâmetros faltando: tipo, id, servidor' });
   }
 
   try {
+    // Construir URL do embed
+    let embedUrl: string;
+    if (tipo === 'tv') {
+      const temp = temporada ? String(temporada) : '1';
+      const eps = episodio ? String(episodio) : '1';
+      embedUrl = `${SERVIDOR_BASE}/embed/serie/${id}/${temp}/${eps}?server=${servidor}&quality=${qualidade}`;
+    } else {
+      embedUrl = `${SERVIDOR_BASE}/embed/movie/${id}?server=${servidor}&quality=${qualidade}`;
+    }
+
     // Nome do arquivo para o download
     let nomeArquivo = titulo ? `${titulo} (${ano || ''})` : `Conteudo_${id}`;
-    nomeArquivo = encodeURIComponent(nomeArquivo.replace(/[^\w\sà-úÀ-Ú0-9]/g, '_').trim());
-
-    // URL de vídeo (em produção, substitua pela lógica real de obtenção de link)
-    // Aqui usamos um placeholder pois não temos acesso a um backend de streaming real
-    const videoUrl = `https://exemplo.com/videos/${servidor}/${tipo}_${id}.mp4`;
+    nomeArquivo = encodeURIComponent(nomeArquivo.replace(/[^a-zA-Z0-9_\s-]/g, '_').trim());
 
     // Deep Links para gerenciadores de download
     // 1DM: https://1dm.app/?url=URL&name=NOME
-    const link1DM = `https://1dm.app/?url=${encodeURIComponent(videoUrl)}&name=${nomeArquivo}.mp4`;
+    const link1DM = `https://1dm.app/?url=${encodeURIComponent(embedUrl)}&name=${nomeArquivo}.mp4`;
     
     // Intent URI para ADM (Android Download Manager)
-    const linkADM = `intent://${videoUrl}#Intent;scheme=https;package=com.dv.adm;S.name=${nomeArquivo}.mp4;end;`;
+    const videoUrlSemProtocolo = embedUrl.replace(/^https?:\/\//, '');
+    const linkADM = `intent://${videoUrlSemProtocolo}#Intent;scheme=https;package=com.dv.adm;S.name=${nomeArquivo}.mp4;end;`;
 
     return res.status(200).json({
       success: true,
       data: {
-        url: videoUrl,
+        url: embedUrl,
+        embedUrl,
         deepLinks: {
           oneDm: link1DM,
           adm: linkADM
