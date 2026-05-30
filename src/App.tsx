@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { abrirEmIDM, abrirEmADM, prepararDownload, construirUrlDownload, type ConfiguracaoDownload } from "./utils/download-handler";
+import { prepararDownload, construirUrlDownload, type ConfiguracaoDownload } from "./utils/download-handler";
 
 type TipoConteudo = "movie" | "tv";
 
@@ -1065,58 +1065,21 @@ export default function App() {
     }
   }, [escapeText]);
 
-  const abrirDeepLink = useCallback(async (prefixo: "idm" | "adm", urlBase: string): Promise<void> => {
+  const iniciarDownloadDireto = useCallback((urlBase: string): void => {
     try {
-      // Extrair parâmetros da URL base
-      const urlParams = new URL(urlBase, window.location.origin);
-      const tipo = urlParams.searchParams.get("tipo") as "movie" | "tv";
-      const id = urlParams.searchParams.get("id") || "";
-      const servidor = urlParams.searchParams.get("servidor") || "s1";
-      const temporada = urlParams.searchParams.get("temporada") || "1";
-      const episodio = urlParams.searchParams.get("episodio") || "1";
-      const qualidade = urlParams.searchParams.get("qualidade") || "auto";
-      
-      // Construir URL da API com todos os parâmetros
-      const apiUrl = new URL("/api/player-url", window.location.origin);
-      apiUrl.searchParams.set("tipo", tipo);
-      apiUrl.searchParams.set("id", id);
-      apiUrl.searchParams.set("servidor", servidor);
-      apiUrl.searchParams.set("temporada", temporada);
-      apiUrl.searchParams.set("episodio", episodio);
-      apiUrl.searchParams.set("qualidade", qualidade);
-      
-      // Obter deep links da API
-      const resposta = await fetch(apiUrl.toString());
-      if (!resposta.ok) {
-        throw new Error(`Erro na API: ${resposta.status}`);
-      }
-      
-      const dados = await resposta.json();
-      if (!dados.success || !dados.data?.deepLinks) {
-        throw new Error("Resposta inválida da API");
-      }
-      
-      // Usar o deep link apropriado
-      const deepLink = prefixo === "idm" 
-        ? dados.data.deepLinks.oneDm 
-        : dados.data.deepLinks.adm;
-      
-      // Abrir o deep link
-      window.location.href = deepLink;
-      
+      // Download direto via navegador - método mais compatível
+      const elemento = document.createElement("a");
+      elemento.href = urlBase;
+      elemento.target = "_blank";
+      elemento.rel = "noopener noreferrer";
+      elemento.style.display = "none";
+      document.body.appendChild(elemento);
+      elemento.click();
+      document.body.removeChild(elemento);
     } catch (erro) {
-      console.error("Erro ao abrir deep link:", erro);
-      // Fallback: tentar abrir diretamente com as funções existentes
-      try {
-        if (prefixo === "idm") {
-          abrirEmIDM(urlBase);
-        } else if (prefixo === "adm") {
-          abrirEmADM(urlBase);
-        }
-      } catch (erro2) {
-        // Último fallback: abrir em nova aba
-        window.open(urlBase, "_blank");
-      }
+      console.error("Erro ao iniciar download:", erro);
+      // Fallback: abrir em nova aba
+      window.open(urlBase, "_blank");
     }
   }, []);
 
@@ -1580,21 +1543,14 @@ export default function App() {
 
       <ModalBase aberto={modalDownload.aberto} aoFechar={() => setModalDownload({ aberto: false, titulo: "", url: "" })} titulo="Baixar conteúdo">
         <p className="text-sm text-[var(--texto-secundario)]">{modalDownload.titulo}</p>
-        <p className="mt-2 text-sm text-[var(--texto-suave)]">Escolhe a aplicação instalada no teu telemóvel.</p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <p className="mt-2 text-sm text-[var(--texto-suave)]">O download será iniciado através do navegador.</p>
+        <div className="mt-4">
           <button
             type="button"
-            onClick={() => abrirDeepLink("idm", modalDownload.url)}
-            className="h-12 rounded-md border border-[var(--borda-cor)] transition hover:border-[var(--destaque-principal)]"
+            onClick={() => iniciarDownloadDireto(modalDownload.url)}
+            className="h-12 w-full rounded-md bg-[var(--destaque-principal)] font-semibold text-white transition hover:brightness-110"
           >
-            Baixar com 1DM
-          </button>
-          <button
-            type="button"
-            onClick={() => abrirDeepLink("adm", modalDownload.url)}
-            className="h-12 rounded-md border border-[var(--borda-cor)] transition hover:border-[var(--destaque-principal)]"
-          >
-            Baixar com ADM
+            Iniciar Download
           </button>
         </div>
       </ModalBase>
