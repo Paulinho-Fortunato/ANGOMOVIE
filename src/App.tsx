@@ -101,8 +101,8 @@ const QUALIDADES_VIDEO = [
   { codigo: "1080p", nome: "1080p" }
 ] as const;
 
-const DESTAQUE_SEMANAL = Object.freeze({
-  semana: "Curadoria da Semana",
+const DESTAQUE_DIARIO = Object.freeze({
+  dia: "Curadoria do Dia",
   titulo: "Noite de Ficção e Acção",
   itens: ["Duna: Parte Dois", "The Last of Us", "Jujutsu Kaisen"]
 });
@@ -1231,9 +1231,9 @@ export default function App() {
             </p>
             {hero ? <p className="text-sm text-white/70">Em destaque agora: {tituloHero}</p> : null}
             <div className="max-w-xl rounded-xl border border-white/15 bg-white/8 px-4 py-3 backdrop-blur-xl">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--destaque-dourado)]">{DESTAQUE_SEMANAL.semana}</p>
-              <p className="mt-1 text-sm font-semibold text-white">{DESTAQUE_SEMANAL.titulo}</p>
-              <p className="mt-1 text-xs text-[var(--texto-suave)]">{DESTAQUE_SEMANAL.itens.join(" • ")}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--destaque-dourado)]">{DESTAQUE_DIARIO.dia}</p>
+              <p className="mt-1 text-sm font-semibold text-white">{DESTAQUE_DIARIO.titulo}</p>
+              <p className="mt-1 text-xs text-[var(--texto-suave)]">{DESTAQUE_DIARIO.itens.join(" • ")}</p>
             </div>
             <div className="flex flex-wrap gap-3 pt-1">
               <a href="#filmes" className="btn-premium inline-flex h-12 items-center rounded-xl bg-[var(--destaque-principal)] px-6 font-semibold shadow-[0_10px_35px_rgba(229,9,20,0.38)] transition hover:bg-[var(--destaque-hover)]">
