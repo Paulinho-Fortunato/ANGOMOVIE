@@ -48,6 +48,10 @@
       "destination": "/api/tmdb/[...path].ts"
     },
     {
+      "source": "/api/player-url",
+      "destination": "/api/player-url.ts"
+    },
+    {
       "source": "/((?!api|assets|.*\\..*).*)",
       "destination": "/index.html"
     }
