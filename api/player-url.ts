@@ -37,23 +37,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let nomeArquivo = titulo ? `${titulo} (${ano || ''})` : `Conteudo_${id}`;
     nomeArquivo = encodeURIComponent(nomeArquivo.replace(/[^a-zA-Z0-9_\s-]/g, '_').trim());
 
-    // Deep Links para gerenciadores de download
-    // 1DM: https://1dm.app/?url=URL&name=NOME
-    const link1DM = `https://1dm.app/?url=${encodeURIComponent(embedUrl)}&name=${nomeArquivo}.mp4`;
-    
-    // Intent URI para ADM (Android Download Manager)
-    const videoUrlSemProtocolo = embedUrl.replace(/^https?:\/\//, '');
-    const linkADM = `intent://${videoUrlSemProtocolo}#Intent;scheme=https;package=com.dv.adm;S.name=${nomeArquivo}.mp4;end;`;
-
+    // Retornar apenas URL direta para download via navegador
     return res.status(200).json({
       success: true,
       data: {
         url: embedUrl,
-        embedUrl,
-        deepLinks: {
-          oneDm: link1DM,
-          adm: linkADM
-        }
+        embedUrl
       }
     });
 
