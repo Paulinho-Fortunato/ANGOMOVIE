@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Bloquear endpoints internos
+Disallow: /api/
+Disallow: /server/
+
+Sitemap: https://angomovie.qzz.io/sitemap.xml

@@ -21,10 +21,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const path = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path || '';
-    const url = new URL(`https://api.themoviedb.org/3/${path}`);
+    // Extrair o path da URL - para /api/tmdb/tv/popular, o path é ['tv', 'popular']
+    const pathSegments = Array.isArray(req.query.path) ? req.query.path : [req.query.path].filter(Boolean);
+    const tmdbPath = pathSegments.join('/');
+    
+    const url = new URL(`https://api.themoviedb.org/3/${tmdbPath}`);
 
-    // Adicionar parâmetros da query
+    // Adicionar parâmetros da query (exceto 'path' que é usado para construir a URL)
     Object.entries(req.query).forEach(([key, value]) => {
       if (key !== 'path' && value !== undefined) {
         const values = Array.isArray(value) ? value : [value];
