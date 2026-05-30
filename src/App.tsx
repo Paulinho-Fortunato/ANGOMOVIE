@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { abrirEmIDM, abrirEmADM, prepararDownload, construirUrlDownload, type ConfiguracaoDownload } from "./utils/download-handler";
 
 type TipoConteudo = "movie" | "tv";
 
@@ -101,11 +102,50 @@ const QUALIDADES_VIDEO = [
   { codigo: "1080p", nome: "1080p" }
 ] as const;
 
-const DESTAQUE_DIARIO = Object.freeze({
-  dia: "Curadoria do Dia",
-  titulo: "Noite de Ficção e Acção",
-  itens: ["Duna: Parte Dois", "The Last of Us", "Jujutsu Kaisen"]
-});
+/** Gera curadoria diária baseada na data, embaralhando conteúdos */
+function gerarCuradoriaDia(): { dia: string; titulo: string; itens: string[] } {
+  const hoje = new Date();
+  const seed = hoje.getFullYear() * 10000 + (hoje.getMonth() + 1) * 100 + hoje.getDate();
+  
+  // Listas de conteúdos por categoria
+  const ficcao = [
+    "Duna: Parte Dois", "Interestelar", "Blade Runner 2049", "The Last of Us",
+    "Stranger Things", "Dark", "Foundation", "Severance", "Andor", "For All Mankind"
+  ];
+  const accao = [
+    "John Wick 4", "Mission: Impossible 7", "Top Gun: Maverick", "Jujutsu Kaisen",
+    "Attack on Titan", "Demon Slayer", "One Punch Man", "The Boys", "Reacher", "Jack Ryan"
+  ];
+  const dramas = [
+    "Oppenheimer", "The Bear", "Succession", "Breaking Bad", "Better Call Saul",
+    "The Crown", "House of the Dragon", "Shogun", "True Detective", "Mare of Easttown"
+  ];
+  
+  // Seleciona baseado no seed diário
+  const indiceFiccao = (seed % ficcao.length);
+  const indiceAccao = ((seed * 7) % accao.length);
+  const indiceDrama = ((seed * 13) % dramas.length);
+  
+  const selecionados = [
+    ficcao[indiceFiccao],
+    accao[indiceAccao],
+    dramas[indiceDrama]
+  ].filter((item, pos, arr) => arr.indexOf(item) === pos); // Remove duplicados
+  
+  // Embaralha baseado no seed
+  for (let i = selecionados.length - 1; i > 0; i--) {
+    const j = (seed * (i + 1)) % (i + 1);
+    [selecionados[i], selecionados[j]] = [selecionados[j], selecionados[i]];
+  }
+  
+  return {
+    dia: "Curadoria do Dia",
+    titulo: "Noite de Ficção e Acção",
+    itens: selecionados.slice(0, 3)
+  };
+}
+
+const DESTAQUE_DIARIO = Object.freeze(gerarCuradoriaDia());
 
 const FILTROS_FILMES = {
   populares: "/movie/popular",
@@ -996,22 +1036,47 @@ export default function App() {
   }, []);
 
   /** Prepara modal de download e valida URL */
-  const abrirDownload = useCallback((item: ItemConteudo, tipo: TipoConteudo): void => {
+  const abrirDownload = useCallback((item: ItemConteudo, tipo: TipoConteudo, temporada = 1, episodio = 1): void => {
     try {
       const idSeguro = sanitizarId(item.id);
-      const url = gerarUrlReproducao(tipo, idSeguro, 1, 1, SERVIDOR_PADRAO, AUDIO_PADRAO, QUALIDADE_PADRAO);
+      const titulo = item.title ?? item.name ?? "Sem título";
+      
+      // Construir configuração de download
+      const config: ConfiguracaoDownload = {
+        titulo: escapeText(titulo),
+        id: String(idSeguro),
+        tipo,
+        temporada,
+        episodio,
+        poster: item.poster_path ?? null
+      };
+      
+      // Preparar dados de download
+      const dadosDownload = prepararDownload(config);
+      
       setModalDownload({
         aberto: true,
-        titulo: escapeText(item.title ?? item.name ?? "Sem título"),
-        url
+        titulo: dadosDownload.titulo,
+        url: dadosDownload.url
       });
-    } catch {
+    } catch (erro) {
+      console.error("Erro ao preparar download:", erro);
       setErroPlayer("Download indisponível para este conteúdo.");
     }
   }, [escapeText]);
 
   const abrirDeepLink = useCallback((prefixo: "idm" | "adm", url: string): void => {
-    window.location.href = `${prefixo}:${encodeURIComponent(url)}`;
+    try {
+      if (prefixo === "idm") {
+        abrirEmIDM(url);
+      } else if (prefixo === "adm") {
+        abrirEmADM(url);
+      }
+    } catch (erro) {
+      console.error("Erro ao abrir deep link:", erro);
+      // Fallback: abrir em nova aba
+      window.open(url, "_blank");
+    }
   }, []);
 
   /** Inicia reprodução a partir do modal de detalhes e fecha o modal */
