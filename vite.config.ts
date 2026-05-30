@@ -24,7 +24,18 @@ export default defineConfig({
         manualChunks: {
           vendor: ["react", "react-dom"],
         },
+        // Garante que o entry point seja um arquivo separado
+        entryFileNames: `assets/[name]-[hash].js`,
+        chunkFileNames: `assets/[name]-[hash].js`,
+        assetFileNames: `assets/[name]-[hash].[ext]`,
       },
+    },
+  },
+  server: {
+    headers: {
+      // Headers seguros para desenvolvimento
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
 });

@@ -1,71 +1,68 @@
-```
-# Dependencies
-node_modules/
-
-# Build outputs
+# Build artifacts
 dist/
 build/
 coverage/
+htmlcov/
 
-# Environment variables
-.env
-.env.local
-.env.*
+# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+.yarn-cache/
 
-# IDE specific
-.vscode/
-.idea/
-
-# Python specific
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.py.class
-*.py.backup
+.Python
+env/
+venv/
+.venv/
+.ENV
+.python-version
+.mypy_cache/
+.pytest_cache/
+.tox/
+.coverage
 
 # Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Temporary files
 *.tmp
 *.temp
-*.bak
-*.swp
-*.swo
-
-# OS generated files
 .DS_Store
-Thumbs.db
-
-# Testing
-.pytest_cache/
-.mypy_cache/
-htmlcov/
-.coverage
-
-# Distribution / packaging
-*.egg-info/
-*.egg
-*.whl
-*.zip
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
-
-# Compiled binary files
-*.exe
-*.dll
-*.so
-*.dylib
-*.a
-*.o
-*.obj
-*.out
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+desktop.ini
 
 # Compressed files
+*.zip
 *.gz
+*.tar
 *.tgz
 *.bz2
 *.xz
@@ -81,4 +78,11 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-```
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+
+# Vite specific
+.vite/
+!vite.config.ts
