@@ -1067,19 +1067,11 @@ export default function App() {
 
   const iniciarDownloadDireto = useCallback((urlBase: string): void => {
     try {
-      // Download direto via navegador - método mais compatível
-      const elemento = document.createElement("a");
-      elemento.href = urlBase;
-      elemento.target = "_blank";
-      elemento.rel = "noopener noreferrer";
-      elemento.style.display = "none";
-      document.body.appendChild(elemento);
-      elemento.click();
-      document.body.removeChild(elemento);
+      // Abrir player em nova aba para download via navegador
+      window.open(urlBase, "_blank", "noopener,noreferrer");
     } catch (erro) {
-      console.error("Erro ao iniciar download:", erro);
-      // Fallback: abrir em nova aba
-      window.open(urlBase, "_blank");
+      console.error("Erro ao abrir player:", erro);
+      setErroPlayer("Não foi possível abrir o player. Tente novamente.");
     }
   }, []);
 
