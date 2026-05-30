@@ -3,41 +3,68 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Primário -->
+    <title>AngoMovie | Streaming Gratuito em Angola - Filmes, Séries e Animes</title>
     <meta
       name="description"
-      content="AngoMovie: filmes, séries e animes 100% gratuitos para Angola, sem login obrigatório."
+      content="AngoMovie: Plataforma angolana de streaming 100% gratuita. Assista filmes, séries e animes online sem login obrigatório. Conteúdo actualizado diariamente com qualidade HD."
     />
     <meta
       name="keywords"
-      content="AngoMovie, filmes grátis Angola, séries grátis Angola, animes Angola, streaming Angola, sem login"
+      content="AngoMovie, filmes grátis Angola, séries grátis Angola, animes Angola, streaming Angola, ver filmes online, séries online, animes online, cinema angolano, streaming gratuito, filmes HD, séries HD"
     />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="author" content="AngoMovie" />
-    <meta name="theme-color" content="#E50914" />
-    <meta property="og:site_name" content="AngoMovie" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://angomovie.qzz.io/" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://angomovie.qzz.io/" />
+    <meta property="og:site_name" content="AngoMovie" />
     <meta property="og:locale" content="pt_AO" />
     <meta property="og:title" content="AngoMovie | Streaming Gratuito em Angola" />
     <meta
       property="og:description"
       content="Filmes, séries e animes para todos. 100% gratuito, sem login obrigatório e com apoio voluntário."
     />
-    <meta property="og:url" content="https://angomovie.qzz.io/" />
     <meta property="og:image" content="https://angomovie.qzz.io/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="AngoMovie - Plataforma de Streaming Angolana" />
+    
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://angomovie.qzz.io/" />
     <meta name="twitter:title" content="AngoMovie | Streaming Gratuito em Angola" />
     <meta
       name="twitter:description"
       content="Filmes, séries e animes para todos. 100% gratuito, sem login obrigatório e com apoio voluntário."
     />
     <meta name="twitter:image" content="https://angomovie.qzz.io/og-image.jpg" />
-    <link rel="canonical" href="https://angomovie.qzz.io/" />
+    <meta name="twitter:image:alt" content="AngoMovie - Plataforma de Streaming Angolana" />
+    
+    <!-- Theme & Performance -->
+    <meta name="theme-color" content="#E50914" />
+    <meta name="color-scheme" content="dark light" />
+    
+    <!-- Preconnect para performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.themoviedb.org" />
+    <link rel="dns-prefetch" href="https://api.themoviedb.org" />
+    
+    <!-- Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap"
       rel="stylesheet"
     />
+    
+    <!-- Icons -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
@@ -45,7 +72,8 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-
+    
+    <!-- Structured Data (Schema.org) -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -56,11 +84,43 @@
         "description": "Plataforma de streaming angolana com filmes, séries e animes 100% gratuitos.",
         "publisher": {
           "@type": "Organization",
-          "name": "AngoMovie"
+          "name": "AngoMovie",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://angomovie.qzz.io/logo.png"
+          }
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://angomovie.qzz.io/?search={search_term_string}",
+          "query-input": "required name=search_term_string"
         }
       }
     </script>
-    <title>AngoMovie | Streaming Gratuito em Angola</title>
+    
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Movie",
+        "name": "Catálogo de Filmes AngoMovie",
+        "description": "Catálogo completo de filmes disponíveis na plataforma AngoMovie",
+        "genre": ["Acção", "Drama", "Comédia", "Ficção Científica", "Animação"],
+        "contentRating": "M/12",
+        "characteristic": "Streaming gratuito"
+      }
+    </script>
+    
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TVSeries",
+        "name": "Catálogo de Séries AngoMovie",
+        "description": "Catálogo completo de séries disponíveis na plataforma AngoMovie",
+        "genre": ["Drama", "Acção", "Comédia", "Thriller", "Ficção Científica"],
+        "contentRating": "M/12",
+        "characteristic": "Streaming gratuito"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

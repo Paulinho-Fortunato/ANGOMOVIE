@@ -1,7 +1,6 @@
 /**
- * @fileoverview Gestor de Downloads para Integração com IDM e ADM
- * Implementa Deep Links válidos para aplicações de download externas
- * e tratamento seguro de URLs com validação rigorosa
+ * @fileoverview Gestor de Downloads via Navegador
+ * Implementa download direto através do navegador, sem dependência de aplicações externas
  */
 
 export interface ConfiguracaoDownload {
@@ -48,117 +47,31 @@ function validarUrlDownload(url: string): string {
 }
 
 /**
- * Gera Deep Link para IDM (Internet Download Manager)
- * Formato: idm:URL
- * @throws Error se a URL não for válida
+ * Inicia download direto no navegador
+ * Método universal que funciona em qualquer dispositivo
  */
-export function gerarDeepLinkIDM(url: string): string {
+export function iniciarDownloadDireto(url: string, nomeArquivo?: string): void {
   const urlValidada = validarUrlDownload(url);
-  return `idm:${encodeURIComponent(urlValidada)}`;
-}
-
-/**
- * Gera Deep Link para ADM (Advanced Download Manager)
- * Formato: adm:URL
- * @throws Error se a URL não for válida
- */
-export function gerarDeepLinkADM(url: string): string {
-  const urlValidada = validarUrlDownload(url);
-  return `adm:${encodeURIComponent(urlValidada)}`;
-}
-
-/**
- * Abre o link de download na aplicação IDM
- * Redireciona o navegador para o Deep Link IDM
- */
-export function abrirEmIDM(url: string): void {
-  try {
-    const deepLink = gerarDeepLinkIDM(url);
-    window.location.href = deepLink;
-  } catch (erro) {
-    console.error("Erro ao abrir em IDM:", erro);
-    throw erro;
-  }
-}
-
-/**
- * Abre o link de download na aplicação ADM
- * Redireciona o navegador para o Deep Link ADM
- */
-export function abrirEmADM(url: string): void {
-  try {
-    const deepLink = gerarDeepLinkADM(url);
-    window.location.href = deepLink;
-  } catch (erro) {
-    console.error("Erro ao abrir em ADM:", erro);
-    throw erro;
-  }
-}
-
-/**
- * Detecta se IDM ou ADM estão instalados no dispositivo
- * Retorna a aplicação disponível em prioridade: IDM > ADM
- */
-export function detectarAplicacaoDownload(): "idm" | "adm" | null {
-  // Em Android, verificar se a aplicação está instalada é complexo
-  // Por isso, retornamos a preferência padrão
-  // A aplicação pode fallback para o navegador se o Deep Link falhar
-
-  // Prioridade: IDM > ADM
-  return "idm"; // Padrão
-}
-
-/**
- * Tenta abrir com a melhor aplicação disponível
- * Fallback automático: IDM → ADM → Navegador
- */
-export function abrirComMelhorAplicacao(url: string, nomeArquivo?: string): void {
-  const urlValidada = validarUrlDownload(url);
-
-  // Criar nome do arquivo com metadados úteis
+  
   const nomeCompleto = nomeArquivo
     ? `${nomeArquivo}.mkv`
     : `angomovie-${Date.now()}.mkv`;
 
   try {
-    // Tentar IDM primeiro
-    const deepLinkIDM = `idm:${encodeURIComponent(urlValidada)}&fname=${encodeURIComponent(nomeCompleto)}`;
-    window.location.href = deepLinkIDM;
-
-    // Se falhar (após timeout), tentar ADM
-    setTimeout(() => {
-      try {
-        const deepLinkADM = `adm:${encodeURIComponent(urlValidada)}`;
-        window.location.href = deepLinkADM;
-      } catch (erro) {
-        console.error("Erro ao abrir em ADM:", erro);
-        // Fallback para download direto no navegador
-        tentarDownloadNaveagador(urlValidada, nomeCompleto);
-      }
-    }, 1500);
-  } catch (erro) {
-    console.error("Erro ao abrir com aplicação de download:", erro);
-    tentarDownloadNaveagador(urlValidada, nomeCompleto);
-  }
-}
-
-/**
- * Fallback: tenta download direto no navegador
- * Útil se nenhuma aplicação de download estiver instalada
- */
-function tentarDownloadNaveagador(url: string, nomeArquivo: string): void {
-  try {
+    // Criar elemento de download
     const elemento = document.createElement("a");
-    elemento.href = url;
-    elemento.download = nomeArquivo;
+    elemento.href = urlValidada;
+    elemento.download = nomeCompleto;
+    elemento.target = "_blank";
+    elemento.rel = "noopener noreferrer";
     elemento.style.display = "none";
     document.body.appendChild(elemento);
     elemento.click();
     document.body.removeChild(elemento);
   } catch (erro) {
     console.error("Erro ao fazer download no navegador:", erro);
-    // Último recurso: abrir em nova aba
-    window.open(url, "_blank");
+    // Fallback: abrir em nova aba
+    window.open(urlValidada, "_blank", "noopener,noreferrer");
   }
 }
 
@@ -203,7 +116,6 @@ export function prepararDownload(config: ConfiguracaoDownload): {
   nomeArquivo: string;
   url: string;
   tipo: string;
-  appPrefenda: "idm" | "adm";
 } {
   const nomeArquivo = config.titulo
     .toLowerCase()
@@ -225,6 +137,5 @@ export function prepararDownload(config: ConfiguracaoDownload): {
     tipo: config.tipo === "tv" 
       ? `Série S${config.temporada}E${config.episodio}` 
       : "Filme",
-    appPrefenda: detectarAplicacaoDownload() || "idm"
   };
 }
