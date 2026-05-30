@@ -1768,7 +1768,7 @@ function SecaoCatalogo(props: PropriedadesSecao) {
       const alvo = document.querySelector<HTMLButtonElement>(selector);
       alvo?.focus();
     }
-  }
+  }, [props.id, props.estado.lista.length]);
 
   return (
     <section id={props.id} className="mx-auto w-full max-w-[1400px] border-t border-white/10 px-4 py-10 sm:px-6 lg:px-10">
