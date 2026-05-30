@@ -44,6 +44,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/tmdb/:path*",
+      "destination": "/api/tmdb/[...path].ts"
+    },
+    {
       "source": "/((?!api|assets|.*\\..*).*)",
       "destination": "/index.html"
     }

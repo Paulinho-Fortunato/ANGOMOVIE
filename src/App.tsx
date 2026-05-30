@@ -691,10 +691,15 @@ export default function App() {
     return () => window.removeEventListener("keydown", aoPressionar);
   }, [player.activo, player.tipo, player.episodio, temporadaActual]);
 
+  /** @returns título seguro para mostrar */
+  const escapeText = useCallback((valor: string): string => {
+    return escaparHTML(valor);
+  }, []);
+
   const tituloHero = useMemo(() => {
     if (!hero) return "AngoMovie";
     return escapeText(hero.title ?? hero.name ?? "AngoMovie");
-  }, [hero]);
+  }, [hero, escapeText]);
 
   const continuarAVer = useMemo(() => {
     return Object.values(progressoLocal)
@@ -706,11 +711,6 @@ export default function App() {
     if (player.tipo !== "tv" || !temporadaActual) return false;
     return temporadaActual.episodes.some((episodio) => episodio.episode_number === player.episodio + 1);
   }, [player.tipo, player.episodio, temporadaActual]);
-
-  /** @returns título seguro para mostrar */
-  const escapeText = useCallback((valor: string): string => {
-    return escaparHTML(valor);
-  }, []);
 
   /** Actualiza estado local e armazenamento para favoritos */
   const sincronizarFavoritos = useCallback((actualizados: ItemGuardado[]): void => {
