@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 type TipoConteudo = "movie" | "tv";
 
@@ -708,45 +708,45 @@ export default function App() {
   }, [player.tipo, player.episodio, temporadaActual]);
 
   /** @returns título seguro para mostrar */
-  function escapeText(valor: string): string {
+  const escapeText = useCallback((valor: string): string => {
     return escaparHTML(valor);
-  }
+  }, []);
 
   /** Actualiza estado local e armazenamento para favoritos */
-  function sincronizarFavoritos(actualizados: ItemGuardado[]): void {
+  const sincronizarFavoritos = useCallback((actualizados: ItemGuardado[]): void => {
     setFavoritos(actualizados);
     guardarArmazenamento("favoritos", actualizados.slice(0, 200));
-  }
+  }, []);
 
   /** Actualiza estado local e armazenamento para histórico */
-  function sincronizarHistorico(actualizados: ItemGuardado[]): void {
+  const sincronizarHistorico = useCallback((actualizados: ItemGuardado[]): void => {
     setHistorico(actualizados);
     guardarArmazenamento("historico", actualizados.slice(0, 100));
-  }
+  }, []);
 
   /** Guarda e sincroniza lista para ver depois */
-  function sincronizarVerDepois(actualizados: ItemVerDepois[]): void {
+  const sincronizarVerDepois = useCallback((actualizados: ItemVerDepois[]): void => {
     setVerDepois(actualizados);
     guardarArmazenamento("ver-depois", actualizados.slice(0, 200));
-  }
+  }, []);
 
   /** @returns true quando item já está em favoritos */
-  function estaNosFavoritos(id: number, tipo: TipoConteudo): boolean {
+  const estaNosFavoritos = useCallback((id: number, tipo: TipoConteudo): boolean => {
     return favoritos.some((item) => item.id === String(id) && item.tipo === tipo);
-  }
+  }, [favoritos]);
 
   /** @returns true quando o conteúdo já foi visto */
-  function jaFoiVisto(id: number, tipo: TipoConteudo): boolean {
+  const jaFoiVisto = useCallback((id: number, tipo: TipoConteudo): boolean => {
     return historico.some((item) => item.id === String(id) && item.tipo === tipo);
-  }
+  }, [historico]);
 
   /** @returns true quando conteúdo está guardado para ver depois */
-  function estaNaListaVerDepois(id: number, tipo: TipoConteudo): boolean {
+  const estaNaListaVerDepois = useCallback((id: number, tipo: TipoConteudo): boolean => {
     return verDepois.some((item) => item.id === String(id) && item.tipo === tipo);
-  }
+  }, [verDepois]);
 
   /** Adiciona ou remove item da lista de favoritos */
-  function alternarFavorito(item: ItemConteudo, tipo: TipoConteudo): void {
+  const alternarFavorito = useCallback((item: ItemConteudo, tipo: TipoConteudo): void => {
     const idSeguro = sanitizarId(item.id);
     const titulo = escapeText(item.title ?? item.name ?? "Sem título");
     if (estaNosFavoritos(item.id, tipo)) {
@@ -762,10 +762,10 @@ export default function App() {
       guardadoEm: new Date().toISOString()
     };
     sincronizarFavoritos([novo, ...favoritos]);
-  }
+  }, [favoritos, escapeText, estaNosFavoritos, sincronizarFavoritos]);
 
   /** Adiciona ou remove conteúdo na lista para ver depois */
-  function alternarVerDepois(item: ItemConteudo, tipo: TipoConteudo): void {
+  const alternarVerDepois = useCallback((item: ItemConteudo, tipo: TipoConteudo): void => {
     const idSeguro = sanitizarId(item.id);
     const titulo = escapeText(item.title ?? item.name ?? "Sem título");
     if (estaNaListaVerDepois(item.id, tipo)) {
@@ -783,10 +783,10 @@ export default function App() {
       },
       ...verDepois
     ]);
-  }
+  }, [verDepois, escapeText, estaNaListaVerDepois, sincronizarVerDepois]);
 
   /** Faz prefetch dos detalhes para reduzir latência ao abrir modal */
-  async function prefetchDetalhes(item: ItemConteudo, tipo: TipoConteudo): Promise<void> {
+  const prefetchDetalhes = useCallback(async (item: ItemConteudo, tipo: TipoConteudo): Promise<void> => {
     const idSeguro = sanitizarId(item.id);
     const chave = `${tipo}-${idSeguro}`;
     if (cachePrefetch.current.has(chave)) return;
@@ -798,10 +798,10 @@ export default function App() {
     } catch {
       cachePrefetch.current.delete(chave);
     }
-  }
+  }, []);
 
   /** Regista reprodução recente no histórico local */
-  function registarHistorico(item: ItemConteudo, tipo: TipoConteudo, temporada = 1, episodio = 1): void {
+  const registarHistorico = useCallback((item: ItemConteudo, tipo: TipoConteudo, temporada = 1, episodio = 1): void => {
     const idSeguro = sanitizarId(item.id);
     const titulo = escapeText(item.title ?? item.name ?? "Sem título");
     const semDuplicado = historico.filter((entrada) => !(entrada.id === idSeguro && entrada.tipo === tipo));
@@ -818,10 +818,10 @@ export default function App() {
       ...semDuplicado
     ];
     sincronizarHistorico(actualizados);
-  }
+  }, [historico, escapeText, sincronizarHistorico]);
 
   /** Carrega mais itens para uma secção específica */
-  async function carregarMais(secao: "filmes" | "series" | "animes"): Promise<void> {
+  const carregarMais = useCallback(async (secao: "filmes" | "series" | "animes"): Promise<void> => {
     if (secao === "filmes") {
       if (filmes.pagina >= filmes.totalPaginas || filmes.aCarregar) return;
       setFilmes((estado) => ({ ...estado, aCarregar: true }));
@@ -876,10 +876,10 @@ export default function App() {
     } catch {
       setAnimes((estado) => ({ ...estado, aCarregar: false, erro: "Falha ao carregar mais animes." }));
     }
-  }
+  }, [filmes, series, animes, filtroFilmes, filtroSeries]);
 
   /** Abre modal com detalhes completos do conteúdo */
-  async function abrirDetalhes(item: ItemConteudo, tipo: TipoConteudo): Promise<void> {
+  const abrirDetalhes = useCallback(async (item: ItemConteudo, tipo: TipoConteudo): Promise<void> => {
     setModalDetalhes({ aberto: true, tipo, item: null, aCarregar: true, erro: "" });
     try {
       const endpoint = tipo === "movie" ? `/movie/${item.id}` : `/tv/${item.id}`;
@@ -888,10 +888,10 @@ export default function App() {
     } catch {
       setModalDetalhes({ aberto: true, tipo, item: null, aCarregar: false, erro: "Não foi possível carregar os detalhes." });
     }
-  }
+  }, []);
 
   /** Inicia reprodução segura e trata episódios para séries */
-  async function reproduzir(item: ItemConteudo, tipo: TipoConteudo, temporada = 1, episodio = 1): Promise<void> {
+  const reproduzir = useCallback(async (item: ItemConteudo, tipo: TipoConteudo, temporada = 1, episodio = 1): Promise<void> => {
     try {
       setErroPlayer("");
       setACarregarPlayer(true);
@@ -945,10 +945,10 @@ export default function App() {
       setErroPlayer(erro instanceof Error ? erro.message : "Não foi possível iniciar a reprodução.");
       reportarFalhaPlayer("iniciar-reproducao");
     }
-  }
+  }, [escapeText, progressoLocal, registarHistorico]);
 
   /** Reproduz um episódio específico da temporada carregada */
-  async function escolherEpisodio(numeroEpisodio: number): Promise<void> {
+  const escolherEpisodio = useCallback(async (numeroEpisodio: number): Promise<void> => {
     if (!player.id || player.tipo !== "tv") return;
     try {
       setACarregarPlayer(true);
@@ -961,10 +961,10 @@ export default function App() {
       setACarregarPlayer(false);
       reportarFalhaPlayer("troca-episodio");
     }
-  }
+  }, [player.id, player.tipo, player.temporada, player.qualidade, temporadaActual]);
 
   /** Carrega uma temporada completa e selecciona episódio inicial */
-  async function escolherTemporada(numeroTemporada: number): Promise<void> {
+  const escolherTemporada = useCallback(async (numeroTemporada: number): Promise<void> => {
     if (!player.id || player.tipo !== "tv") return;
     try {
       setACarregarPlayer(true);
@@ -988,15 +988,15 @@ export default function App() {
       setACarregarPlayer(false);
       reportarFalhaPlayer("troca-temporada");
     }
-  }
+  }, [player.id, player.tipo, player.qualidade]);
 
   /** Fecha o popup do player */
-  function fecharPlayer(): void {
+  const fecharPlayer = useCallback((): void => {
     setPlayer((actual) => ({ ...actual, activo: false }));
-  }
+  }, []);
 
   /** Prepara modal de download e valida URL */
-  function abrirDownload(item: ItemConteudo, tipo: TipoConteudo): void {
+  const abrirDownload = useCallback((item: ItemConteudo, tipo: TipoConteudo): void => {
     try {
       const idSeguro = sanitizarId(item.id);
       const url = gerarUrlReproducao(tipo, idSeguro, 1, 1, SERVIDOR_PADRAO, AUDIO_PADRAO, QUALIDADE_PADRAO);
@@ -1008,29 +1008,29 @@ export default function App() {
     } catch {
       setErroPlayer("Download indisponível para este conteúdo.");
     }
-  }
+  }, [escapeText]);
 
-  function abrirDeepLink(prefixo: "idm" | "adm", url: string): void {
+  const abrirDeepLink = useCallback((prefixo: "idm" | "adm", url: string): void => {
     window.location.href = `${prefixo}:${encodeURIComponent(url)}`;
-  }
+  }, []);
 
   /** Inicia reprodução a partir do modal de detalhes e fecha o modal */
-  function verAgoraPelosDetalhes(): void {
+  const verAgoraPelosDetalhes = useCallback((): void => {
     if (!modalDetalhes.item) return;
     setModalDetalhes({ aberto: false, tipo: modalDetalhes.tipo, item: null, aCarregar: false, erro: "" });
     void reproduzir(modalDetalhes.item, modalDetalhes.tipo, 1, 1);
-  }
+  }, [modalDetalhes, reproduzir]);
 
   /** Abre download a partir dos detalhes e fecha o modal de detalhes */
-  function baixarPelosDetalhes(): void {
+  const baixarPelosDetalhes = useCallback((): void => {
     if (!modalDetalhes.item) return;
     const item = modalDetalhes.item;
     const tipo = modalDetalhes.tipo;
     setModalDetalhes({ aberto: false, tipo, item: null, aCarregar: false, erro: "" });
     abrirDownload(item, tipo);
-  }
+  }, [modalDetalhes, abrirDownload]);
 
-  function reportarFalhaPlayer(contexto: string): void {
+  const reportarFalhaPlayer = useCallback((contexto: string): void => {
     fetch(`${API_PROXY_BASE}/observability/player-falha`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1043,10 +1043,10 @@ export default function App() {
         qualidade: player.qualidade
       })
     }).catch(() => undefined);
-  }
+  }, [player.id, player.tipo, player.temporada, player.episodio, player.qualidade]);
 
   /** Retoma conteúdo com temporada/episódio guardados no progresso local */
-  function retomarConteudo(item: ProgressoGuardado): void {
+  const retomarConteudo = useCallback((item: ProgressoGuardado): void => {
     const itemBase: ItemConteudo = {
       id: Number.parseInt(item.id, 10),
       title: item.tipo === "movie" ? item.titulo : undefined,
@@ -1054,7 +1054,7 @@ export default function App() {
       poster_path: item.poster
     };
     void reproduzir(itemBase, item.tipo, item.temporada, item.episodio);
-  }
+  }, [reproduzir]);
 
   return (
     <div className={`min-h-screen bg-[radial-gradient(circle_at_top_right,#1a2743_0%,#050a18_45%,#040815_100%)] text-[var(--texto-principal)] ${modoDadosReduzidos ? "modo-lite" : ""} ${temaVisual === "noite-dourada" ? "tema-noite-dourada" : "tema-cinema-escuro"}`}>
@@ -1747,7 +1747,7 @@ interface PropriedadesSecao {
 function SecaoCatalogo(props: PropriedadesSecao) {
   const tamanhoPoster = props.reduzMovimento ? "w185" : "w342";
 
-  function gerirNavegacaoTeclado(evento: KeyboardEvent<HTMLButtonElement>, indice: number, item: ItemConteudo): void {
+  const gerirNavegacaoTeclado = useCallback((evento: KeyboardEvent<HTMLButtonElement>, indice: number, item: ItemConteudo): void => {
     const colunas = window.innerWidth >= 1024 ? 6 : window.innerWidth >= 640 ? 3 : 2;
     let proximoIndice = indice;
 
@@ -1768,7 +1768,7 @@ function SecaoCatalogo(props: PropriedadesSecao) {
       const alvo = document.querySelector<HTMLButtonElement>(selector);
       alvo?.focus();
     }
-  }
+  }, [props.id, props.estado.lista.length]);
 
   return (
     <section id={props.id} className="mx-auto w-full max-w-[1400px] border-t border-white/10 px-4 py-10 sm:px-6 lg:px-10">
