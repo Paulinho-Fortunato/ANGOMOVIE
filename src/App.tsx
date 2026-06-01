@@ -89,18 +89,10 @@ const ORIGENS_IFRAME_PERMITIDAS = ["myembed.biz", "www.myembed.biz"];
 const PREFIXO_ARMAZENAMENTO = "angomovie_v2_";
 const SERVIDOR_PADRAO = "s1";
 const AUDIO_PADRAO = "pt";
-const QUALIDADE_PADRAO = "auto";
 const AMBIENTE = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env;
 const API_PROXY_BASE = AMBIENTE?.VITE_API_BASE ?? "/api";
 const SEGREDO_ASSINATURA_CLIENTE = AMBIENTE?.VITE_REQUEST_SIGNING_SECRET ?? "trocar-em-producao";
 const CHAVE_TMDB_FALLBACK = AMBIENTE?.VITE_TMDB_FALLBACK_KEY ?? "1ae12b1dd164a9026c5124291130c1b9";
-
-const QUALIDADES_VIDEO = [
-  { codigo: "auto", nome: "Auto" },
-  { codigo: "480p", nome: "480p" },
-  { codigo: "720p", nome: "720p" },
-  { codigo: "1080p", nome: "1080p" }
-] as const;
 
 /** Gera curadoria diária baseada na data, embaralhando conteúdos */
 function gerarCuradoriaDia(): { dia: string; titulo: string; itens: string[] } {
@@ -517,7 +509,7 @@ export default function App() {
     url: "",
     temporada: 1,
     episodio: 1,
-    qualidade: QUALIDADE_PADRAO,
+    qualidade: "auto",
     duracaoSegundos: 0
   });
   const [temporadaActual, setTemporadaActual] = useState<DadosTemporada | null>(null);
@@ -938,7 +930,7 @@ export default function App() {
 
       const idSeguro = sanitizarId(item.id);
       const titulo = escapeText(item.title ?? item.name ?? "Sem título");
-      const url = await obterUrlPlayer(tipo, idSeguro, temporada, episodio, QUALIDADE_PADRAO);
+      const url = await obterUrlPlayer(tipo, idSeguro, temporada, episodio, "auto");
 
       const duracaoPadrao = tipo === "movie" ? 2 * 3600 : 45 * 60;
       let duracaoSegundos = duracaoPadrao;
@@ -971,7 +963,7 @@ export default function App() {
         url,
         temporada,
         episodio,
-        qualidade: QUALIDADE_PADRAO,
+        qualidade: "auto",
         duracaoSegundos
       });
 
@@ -1323,7 +1315,6 @@ export default function App() {
           onDetalhes={(item) => void abrirDetalhes(item, "movie")}
           onVer={(item) => void reproduzir(item, "movie")}
           onFavorito={(item) => alternarFavorito(item, "movie")}
-          onDownload={(item) => abrirDownload(item, "movie")}
           onVerDepois={(item) => alternarVerDepois(item, "movie")}
           onPrefetch={(item) => void prefetchDetalhes(item, "movie")}
           onCarregarMais={() => void carregarMais("filmes")}
@@ -1345,7 +1336,6 @@ export default function App() {
           onDetalhes={(item) => void abrirDetalhes(item, "tv")}
           onVer={(item) => void reproduzir(item, "tv", 1, 1)}
           onFavorito={(item) => alternarFavorito(item, "tv")}
-          onDownload={(item) => abrirDownload(item, "tv")}
           onVerDepois={(item) => alternarVerDepois(item, "tv")}
           onPrefetch={(item) => void prefetchDetalhes(item, "tv")}
           onCarregarMais={() => void carregarMais("series")}
@@ -1366,7 +1356,6 @@ export default function App() {
           onDetalhes={(item) => void abrirDetalhes(item, "tv")}
           onVer={(item) => void reproduzir(item, "tv", 1, 1)}
           onFavorito={(item) => alternarFavorito(item, "tv")}
-          onDownload={(item) => abrirDownload(item, "tv")}
           onVerDepois={(item) => alternarVerDepois(item, "tv")}
           onPrefetch={(item) => void prefetchDetalhes(item, "tv")}
           onCarregarMais={() => void carregarMais("animes")}
@@ -1533,20 +1522,6 @@ export default function App() {
         </button>
       </ModalBase>
 
-      <ModalBase aberto={modalDownload.aberto} aoFechar={() => setModalDownload({ aberto: false, titulo: "", url: "" })} titulo="Baixar conteúdo">
-        <p className="text-sm text-[var(--texto-secundario)]">{modalDownload.titulo}</p>
-        <p className="mt-2 text-sm text-[var(--texto-suave)]">O download será iniciado através do navegador.</p>
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => iniciarDownloadDireto(modalDownload.url)}
-            className="h-12 w-full rounded-md bg-[var(--destaque-principal)] font-semibold text-white transition hover:brightness-110"
-          >
-            Iniciar Download
-          </button>
-        </div>
-      </ModalBase>
-
       <ModalBase aberto={atalhosAbertos} aoFechar={() => setAtalhosAbertos(false)} titulo="Atalhos de teclado">
         <ul className="grid gap-2 text-sm text-[var(--texto-secundario)]">
           <li><strong>/</strong> - Focar a busca</li>
@@ -1560,36 +1535,6 @@ export default function App() {
 
       <ModalBase aberto={player.activo} aoFechar={fecharPlayer} titulo={`A ver: ${player.titulo}`} grande>
         <div className="flex h-full flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--texto-suave)]">Qualidade:</span>
-            {QUALIDADES_VIDEO.map((qualidade) => (
-              <button
-                key={qualidade.codigo}
-                type="button"
-                onClick={() => {
-                  void (async () => {
-                    const urlActualizada = await obterUrlPlayer(
-                      player.tipo,
-                      player.id,
-                      player.temporada,
-                      player.episodio,
-                      qualidade.codigo
-                    );
-                    setPlayer((actual) => ({ ...actual, qualidade: qualidade.codigo, url: urlActualizada }));
-                  })();
-                }}
-                className={`h-9 rounded-md border px-3 text-xs font-semibold ${
-                  player.qualidade === qualidade.codigo
-                    ? "border-[var(--destaque-principal)] bg-[var(--destaque-principal)]/20"
-                    : "border-[var(--borda-cor)]"
-                }`}
-              >
-                {qualidade.nome}
-              </button>
-            ))}
-            <span className="ml-auto text-xs text-[var(--texto-suave)]">Posição guardada: {formatarTempo(tempoSessaoPlayer)}</span>
-          </div>
-
           <div className="relative min-h-[220px] w-full flex-1 overflow-hidden rounded-md border border-[var(--borda-cor)] bg-black sm:min-h-[320px] lg:min-h-[420px]">
             {aCarregarPlayer ? (
               <div className="h-full w-full animate-pulse bg-[linear-gradient(120deg,#0b1222_20%,#15213d_50%,#0b1222_80%)]" aria-label="A carregar reprodutor" />
@@ -1797,13 +1742,6 @@ export default function App() {
               >
                 Favorito
               </button>
-              <button
-                type="button"
-                onClick={baixarPelosDetalhes}
-                className="h-12 rounded-md border border-[var(--borda-cor)] font-semibold"
-              >
-                Download
-              </button>
             </div>
           </div>
         ) : null}
@@ -1825,7 +1763,6 @@ interface PropriedadesSecao {
   onDetalhes: (item: ItemConteudo) => void;
   onVer: (item: ItemConteudo) => void;
   onFavorito: (item: ItemConteudo) => void;
-  onDownload: (item: ItemConteudo) => void;
   onVerDepois: (item: ItemConteudo) => void;
   onPrefetch: (item: ItemConteudo) => void;
   onCarregarMais: () => void;
@@ -1963,9 +1900,6 @@ function SecaoCatalogo(props: PropriedadesSecao) {
                 }`}
               >
                 <i className="fa-solid fa-heart" aria-hidden="true" />
-              </button>
-              <button type="button" onClick={() => props.onDownload(item)} className="h-10 rounded-md border border-[var(--borda-cor)] text-xs transition hover:border-[var(--destaque-principal)]">
-                <i className="fa-solid fa-download" aria-hidden="true" />
               </button>
               <button
                 type="button"

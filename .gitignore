@@ -1,40 +1,60 @@
-```
-# Build artifacts
-dist/
-build/
-*.o
-*.obj
-*.out
-
+```gitignore
 # Dependencies
 node_modules/
-.venv/
-venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
 
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
+# Build outputs
+dist/
+build/
+target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.ENV
+.env
+.env.local
+.env.*
+.venv/
+env.bak/
+venv.bak/
 
 # Logs
 *.log
 
-# Environment
-.env
-.env.local
-*.env.*
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Coverage
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.coverage
 coverage/
 htmlcov/
-.coverage
+.nyc_output/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
 
-# OS
-.DS_Store
-Thumbs.db
+# Compressed
+*.zip
+*.tar.gz
+*.gz
+*.rar
+*.7z
 ```
