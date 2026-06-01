@@ -1594,18 +1594,55 @@ export default function App() {
             {aCarregarPlayer ? (
               <div className="h-full w-full animate-pulse bg-[linear-gradient(120deg,#0b1222_20%,#15213d_50%,#0b1222_80%)]" aria-label="A carregar reprodutor" />
             ) : (
-              <iframe
-                src={player.url}
-                title={`Reprodutor: ${player.titulo}`}
-                className="h-full w-full"
-                loading="lazy"
-                onError={() => {
-                  setErroPlayer("Falha no carregamento do player.");
-                  reportarFalhaPlayer("iframe-onerror");
-                }}
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                referrerPolicy="no-referrer"
-              />
+              <>
+                <iframe
+                  src={player.url}
+                  title={`Reprodutor: ${player.titulo}`}
+                  className="h-full w-full"
+                  loading="lazy"
+                  onError={() => {
+                    setErroPlayer("Falha no carregamento do player.");
+                    reportarFalhaPlayer("iframe-onerror");
+                  }}
+                  allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                  referrerPolicy="no-referrer"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
+                />
+                <script
+                  dangerouslySetInnerHTML={{
+                    __html: `
+                      (function() {
+                        var blockedPopups = 0;
+                        var lastPopupTime = 0;
+                        var popupBlockInterval = 1000;
+                        
+                        window.open = function() {
+                          blockedPopups++;
+                          console.log('[AngoMovie] Pop-up bloqueado:', arguments);
+                          return null;
+                        };
+                        
+                        document.addEventListener('click', function(e) {
+                          var now = Date.now();
+                          if (now - lastPopupTime < popupBlockInterval) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            blockedPopups++;
+                            console.log('[AngoMovie] Clique interceptado:', e.target);
+                          }
+                          lastPopupTime = now;
+                        }, true);
+                        
+                        var style = document.createElement('style');
+                        style.textContent = 'iframe { pointer-events: auto; }';
+                        document.head.appendChild(style);
+                        
+                        console.log('[AngoMovie] Proteção anti-pop-up ativa. Bloqueados:', blockedPopups);
+                      })();
+                    `
+                  }}
+                />
+              </>
             )}
           </div>
 
