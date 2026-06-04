@@ -1551,7 +1551,6 @@ export default function App() {
                   }}
                   allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                   referrerPolicy="no-referrer"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
                 />
                 <script
                   dangerouslySetInnerHTML={{
