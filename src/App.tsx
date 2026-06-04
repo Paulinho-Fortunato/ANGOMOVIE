@@ -1549,39 +1549,171 @@ export default function App() {
                     setErroPlayer("Falha no carregamento do player.");
                     reportarFalhaPlayer("iframe-onerror");
                   }}
-                  allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                  allow="autoplay; fullscreen; picture-in-picture; encrypted-media; geolocation; microphone; camera; display-capture; cross-origin-isolated"
                   referrerPolicy="no-referrer"
+                  sandbox="allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-presentation allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
                 />
                 <script
                   dangerouslySetInnerHTML={{
                     __html: `
                       (function() {
                         var blockedPopups = 0;
-                        var lastPopupTime = 0;
-                        var popupBlockInterval = 1000;
                         
+                        // Bloquear window.open
+                        var originalOpen = window.open;
                         window.open = function() {
                           blockedPopups++;
                           console.log('[AngoMovie] Pop-up bloqueado:', arguments);
                           return null;
                         };
                         
+                        // Bloquear redirecionamentos via location
+                        var originalLocation = window.location;
+                        try {
+                          Object.defineProperty(window, 'location', {
+                            set: function(val) {
+                              console.log('[AngoMovie] Redirecionamento bloqueado:', val);
+                              blockedPopups++;
+                            },
+                            get: function() {
+                              return originalLocation;
+                            }
+                          });
+                        } catch(e) {}
+                        
+                        // Interceptar cliques em links externos
                         document.addEventListener('click', function(e) {
-                          var now = Date.now();
-                          if (now - lastPopupTime < popupBlockInterval) {
+                          var target = e.target;
+                          while (target && target !== document) {
+                            if (target.tagName === 'A' && target.href) {
+                              try {
+                                var linkUrl = new URL(target.href);
+                                if (linkUrl.hostname !== window.location.hostname && !linkUrl.hostname.includes('myembed.biz')) {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  blockedPopups++;
+                                  console.log('[AngoMovie] Link externo bloqueado:', target.href);
+                                  return false;
+                                }
+                              } catch(err) {}
+                            }
+                            target = target.parentElement;
+                          }
+                        }, true);
+                        
+                        // Bloquear novos popups via eventos de mouse
+                        document.addEventListener('mousedown', function(e) {
+                          if (e.button === 1 || e.ctrlKey || e.shiftKey || e.metaKey || e.altKey) {
                             e.preventDefault();
                             e.stopPropagation();
                             blockedPopups++;
-                            console.log('[AngoMovie] Clique interceptado:', e.target);
+                            console.log('[AngoMovie] Clique com modificador bloqueado');
+                            return false;
                           }
-                          lastPopupTime = now;
                         }, true);
                         
+                        // Bloquear submission de forms externos
+                        document.addEventListener('submit', function(e) {
+                          var form = e.target;
+                          if (form && form.action) {
+                            try {
+                              var formUrl = new URL(form.action);
+                              if (formUrl.hostname !== window.location.hostname && !formUrl.hostname.includes('myembed.biz')) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                blockedPopups++;
+                                console.log('[AngoMovie] Form externo bloqueado:', form.action);
+                                return false;
+                              }
+                            } catch(err) {}
+                          }
+                        }, true);
+                        
+                        // Observer para remover elementos suspeitos (anúncios, popups, overlays)
+                        var observer = new MutationObserver(function(mutations) {
+                          mutations.forEach(function(mutation) {
+                            mutation.addedNodes.forEach(function(node) {
+                              if (node.nodeType === 1) {
+                                var tagName = node.tagName;
+                                var className = node.className || '';
+                                var id = node.id || '';
+                                var src = node.src || '';
+                                
+                                // Remover iframes externos
+                                if (tagName === 'IFRAME' && src && !src.includes('myembed.biz')) {
+                                  console.log('[AngoMovie] Iframe externo removido:', src);
+                                  node.remove();
+                                  blockedPopups++;
+                                }
+                                
+                                // Remover elementos com classes/IDs suspeitos
+                                var suspiciousPatterns = ['ad', 'ads', 'advertisement', 'popup', 'overlay', 'banner', 'sponsor', 'promo'];
+                                var isSuspicious = suspiciousPatterns.some(function(pattern) {
+                                  return className.toLowerCase().includes(pattern) || 
+                                         id.toLowerCase().includes(pattern);
+                                });
+                                
+                                if (isSuspicious) {
+                                  console.log('[AngoMovie] Elemento suspeito removido:', tagName, className, id);
+                                  node.remove();
+                                  blockedPopups++;
+                                }
+                                
+                                // Remover divs que cobrem todo o viewport (popups de tela cheia)
+                                if (tagName === 'DIV' && node.style) {
+                                  try {
+                                    var computedStyle = window.getComputedStyle(node);
+                                    if ((computedStyle.position === 'fixed' || computedStyle.position === 'absolute') && 
+                                        (parseInt(computedStyle.zIndex) > 999)) {
+                                      console.log('[AngoMovie] Overlay de tela cheia removido');
+                                      node.remove();
+                                      blockedPopups++;
+                                    }
+                                  } catch(err) {}
+                                }
+                              }
+                            });
+                          });
+                        });
+                        
+                        // Iniciar observer quando o DOM estiver pronto
+                        function startObserver() {
+                          observer.observe(document.body || document.documentElement, {
+                            childList: true,
+                            subtree: true,
+                            attributes: true,
+                            attributeFilter: ['style', 'class', 'id']
+                          });
+                        }
+                        
+                        if (document.readyState === 'loading') {
+                          document.addEventListener('DOMContentLoaded', startObserver);
+                        } else {
+                          startObserver();
+                        }
+                        
+                        // Adicionar estilos CSS para ocultar anúncios
                         var style = document.createElement('style');
-                        style.textContent = 'iframe { pointer-events: auto; }';
+                        style.textContent = \`
+                          .ad, .ads, .advertisement, .popup, .overlay, .banner, .sponsor, .promo,
+                          [class*="ad-"], [id*="ad-"], [class*="-ad"], [id*="-ad"],
+                          [class*="popup"], [id*="popup"], [class*="overlay"], [id*="overlay"] {
+                            display: none !important; visibility: hidden !important; opacity: 0 !important;
+                            pointer-events: none !important; height: 0 !important; width: 0 !important;
+                          }
+                          iframe:not([src*="myembed.biz"]) { display: none !important; }
+                          div[id^="ad"], div[class^="ad"], div[id*="popup"], div[class*="popup"] { display: none !important; }
+                          iframe { pointer-events: auto; }
+                        \`;
                         document.head.appendChild(style);
                         
-                        console.log('[AngoMovie] Proteção anti-pop-up ativa. Bloqueados:', blockedPopups);
+                        console.log('[AngoMovie] Proteção anti-pop-up e anti-anúncio ativa. Bloqueados:', blockedPopups);
+                        
+                        setInterval(function() {
+                          if (blockedPopups > 0) {
+                            console.log('[AngoMovie] Total de popups/anúncios bloqueados:', blockedPopups);
+                          }
+                        }, 5000);
                       })();
                     `
                   }}
