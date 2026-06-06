@@ -8,6 +8,7 @@ export interface MonetagConfig {
   minIntervalBetweenAds?: number; // ms entre exibições
   enableInterstitial?: boolean;
   enableDownloadFallback?: boolean;
+  links?: string[]; // Lista de links para rotação
 }
 
 interface AdState {
@@ -23,6 +24,21 @@ const DEFAULT_CONFIG: MonetagConfig = {
   enableInterstitial: true,
   enableDownloadFallback: true
 };
+
+/**
+ * Seleciona link de forma inteligente (rotação para maximizar CTR)
+ */
+let lastUsedLinkIndex = -1;
+
+export function selectNextLink(links: string[]): string {
+  if (links.length === 0) return '';
+  if (links.length === 1) return links[0];
+  
+  // Alterna entre links para evitar fadiga do usuário e aumentar receita
+  const nextIndex = (lastUsedLinkIndex + 1) % links.length;
+  lastUsedLinkIndex = nextIndex;
+  return links[nextIndex];
+}
 
 /**
  * Estado global dos anúncios (persistido em localStorage)
@@ -93,14 +109,19 @@ export function openDirectLinkNewTab(config: MonetagConfig, callback?: () => voi
 
   recordAdImpression();
   
+  // Usa rotação de links se disponível
+  const urlToOpen = config.links && config.links.length > 0 
+    ? selectNextLink(config.links) 
+    : config.directLinkUrl;
+  
   // Abre em nova aba para não interromper experiência
-  const newTab = window.open(config.directLinkUrl, '_blank', 'noopener,noreferrer');
+  const newTab = window.open(urlToOpen, '_blank', 'noopener,noreferrer');
   
   if (newTab) {
     recordAdClick();
     // Fecha automaticamente após 2 segundos se for popup
     setTimeout(() => {
-      if (!newTab.closed && newTab.location.href === config.directLinkUrl) {
+      if (!newTab.closed && newTab.location.href === urlToOpen) {
         newTab.close();
       }
     }, 2000);
@@ -211,8 +232,13 @@ export function showInterstitialAd(
   continueBtn?.addEventListener('click', () => {
     recordAdClick();
     
+    // Usa rotação de links se disponível
+    const urlToOpen = config.links && config.links.length > 0 
+      ? selectNextLink(config.links) 
+      : config.directLinkUrl;
+    
     // Abre direct link em background
-    window.open(config.directLinkUrl, '_blank', 'noopener,noreferrer');
+    window.open(urlToOpen, '_blank', 'noopener,noreferrer');
     
     // Remove overlay e continua
     setTimeout(() => {

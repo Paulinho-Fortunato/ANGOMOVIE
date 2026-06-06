@@ -523,12 +523,16 @@ export default function App() {
   const [tempoSessaoPlayer, setTempoSessaoPlayer] = useState(0);
   const reduzirAnimacao = Boolean(reduzMovimento || modoDadosReduzidos);
 
-  /** Configuração do Monetag - substitua pelo seu direct link */
+  /** Configuração do Monetag - Direct Links oficiais */
   const monetagConfig: MonetagConfig = useMemo(() => ({
-    directLinkUrl: 'https://your-direct-link-url.com', // Substitua pelo seu direct link da Monetag
-    minIntervalBetweenAds: 300000, // 5 minutos entre anúncios
+    directLinkUrl: 'https://omg10.com/4/11088059', // Link principal
+    minIntervalBetweenAds: 180000, // 3 minutos entre anúncios (mais frequente para melhor monetização)
     enableInterstitial: true,
-    enableDownloadFallback: true
+    enableDownloadFallback: true,
+    links: [
+      'https://omg10.com/4/11088059',
+      'https://omg10.com/4/11088058'
+    ]
   }), []);
 
   /** Hook para gerenciar anúncios de forma não intrusiva */
