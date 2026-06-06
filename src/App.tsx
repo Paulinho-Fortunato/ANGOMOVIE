@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { prepararDownload, construirUrlDownload, type ConfiguracaoDownload } from "./utils/download-handler";
+import { canShowAd, showInterstitialAd, openDirectLinkNewTab, createMonetagHook, recordAdImpression, type MonetagConfig } from "./utils/monetag-ads";
 
 type TipoConteudo = "movie" | "tv";
 
@@ -522,6 +523,17 @@ export default function App() {
   const [tempoSessaoPlayer, setTempoSessaoPlayer] = useState(0);
   const reduzirAnimacao = Boolean(reduzMovimento || modoDadosReduzidos);
 
+  /** Configuração do Monetag - substitua pelo seu direct link */
+  const monetagConfig: MonetagConfig = useMemo(() => ({
+    directLinkUrl: 'https://your-direct-link-url.com', // Substitua pelo seu direct link da Monetag
+    minIntervalBetweenAds: 300000, // 5 minutos entre anúncios
+    enableInterstitial: true,
+    enableDownloadFallback: true
+  }), []);
+
+  /** Hook para gerenciar anúncios de forma não intrusiva */
+  const monetagHook = useMemo(() => createMonetagHook(monetagConfig), [monetagConfig]);
+
   useEffect(() => {
     if (!player.activo) return;
     const temporizador = window.setInterval(() => {
@@ -924,13 +936,15 @@ export default function App() {
 
   /** Inicia reprodução segura e trata episódios para séries */
   const reproduzir = useCallback(async (item: ItemConteudo, tipo: TipoConteudo, temporada = 1, episodio = 1): Promise<void> => {
-    try {
-      setErroPlayer("");
-      setACarregarPlayer(true);
+    // Função interna que executa a reprodução real
+    const executarReproducao = async () => {
+      try {
+        setErroPlayer("");
+        setACarregarPlayer(true);
 
-      const idSeguro = sanitizarId(item.id);
-      const titulo = escapeText(item.title ?? item.name ?? "Sem título");
-      const url = await obterUrlPlayer(tipo, idSeguro, temporada, episodio, "auto");
+        const idSeguro = sanitizarId(item.id);
+        const titulo = escapeText(item.title ?? item.name ?? "Sem título");
+        const url = await obterUrlPlayer(tipo, idSeguro, temporada, episodio, "auto");
 
       const duracaoPadrao = tipo === "movie" ? 2 * 3600 : 45 * 60;
       let duracaoSegundos = duracaoPadrao;
@@ -969,15 +983,25 @@ export default function App() {
 
       setTempoSessaoPlayer(progressoGuardado?.posicaoSegundos ?? 0);
 
-      registarHistorico(item, tipo, temporada, episodio);
-      setACarregarPlayer(false);
+        registarHistorico(item, tipo, temporada, episodio);
+        setACarregarPlayer(false);
 
-    } catch (erro) {
-      setACarregarPlayer(false);
-      setErroPlayer(erro instanceof Error ? erro.message : "Não foi possível iniciar a reprodução.");
-      reportarFalhaPlayer("iniciar-reproducao");
+      } catch (erro) {
+        setACarregarPlayer(false);
+        setErroPlayer(erro instanceof Error ? erro.message : "Não foi possível iniciar a reprodução.");
+        reportarFalhaPlayer("iniciar-reproducao");
+      }
+    };
+
+    // Estratégia Monetag: Mostra interstitial suave antes de reproduzir (sem bloquear)
+    if (canShowAd(monetagConfig)) {
+      showInterstitialAd(monetagConfig, () => {
+        void executarReproducao();
+      });
+    } else {
+      void executarReproducao();
     }
-  }, [escapeText, progressoLocal, registarHistorico]);
+  }, [escapeText, progressoLocal, registarHistorico, monetagConfig]);
 
   /** Reproduz um episódio específico da temporada carregada */
   const escolherEpisodio = useCallback(async (numeroEpisodio: number): Promise<void> => {
